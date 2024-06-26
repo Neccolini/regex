@@ -77,6 +77,7 @@ impl<S: Eq + Hash + Clone> DFA<S> {
             .cloned()
     }
 
+    #[allow(dead_code)]
     pub fn print(&self)
     where
         S: std::fmt::Debug,
