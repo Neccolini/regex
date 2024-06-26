@@ -3,7 +3,7 @@ use crate::error::Error;
 pub type StateID = usize;
 
 pub enum State {
-    Accept(StateID),
+    Accept,
     Transition(TransitionState),
 }
 
@@ -24,7 +24,7 @@ impl State {
 
     fn kind(&self) -> &str {
         match self {
-            State::Accept(_) => "Accept",
+            State::Accept => "Accept",
             State::Transition(_) => "Transition",
         }
     }
@@ -102,13 +102,14 @@ impl NFA {
         self.states.len()
     }
 
+    #[allow(dead_code)]
     pub fn print(&self) {
         println!("NFA:");
         println!("Start state: {}", self.start);
         println!("End state: {}", self.end);
         for (i, state) in self.states.iter().enumerate() {
             match state {
-                State::Accept(id) => println!("State {}: Accept ({})", i, id),
+                State::Accept => println!("State {}: Accept", i),
                 State::Transition(transition_state) => {
                     println!("State {}: Transitions ->", i);
                     for transition in &transition_state.transitions {
@@ -175,7 +176,7 @@ impl NFA {
         if id >= self.states.len() as StateID {
             return Err(Error::state_id_overflow(self.states.len()));
         }
-        self.states[id] = State::Accept(id);
+        self.states[id] = State::Accept;
 
         Ok(())
     }
