@@ -4,25 +4,25 @@ pub type StateID = usize;
 
 pub enum State {
     Accept,
-    Transition(TransitionState),
+    Transition(Vec<Transition>),
 }
 
 impl State {
-    pub fn as_transition_mut(&mut self) -> Option<&mut Vec<Transition>> {
+    pub fn as_transitions_mut(&mut self) -> Option<&mut Vec<Transition>> {
         match self {
-            State::Transition(transitions) => Some(&mut transitions.transitions),
+            State::Transition(transitions) => Some(transitions),
             _ => None,
         }
     }
 
-    pub fn as_transition(&self) -> Option<&Vec<Transition>> {
+    pub fn as_transitions(&self) -> Option<&Vec<Transition>> {
         match self {
-            State::Transition(transitions) => Some(&transitions.transitions),
+            State::Transition(transitions) => Some(transitions),
             _ => None,
         }
     }
 
-    fn kind(&self) -> &str {
+    pub fn kind(&self) -> &str {
         match self {
             State::Accept => "Accept",
             State::Transition(_) => "Transition",
@@ -30,14 +30,12 @@ impl State {
     }
 }
 
-pub struct TransitionState {
-    transitions: Vec<Transition>,
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Transition {
+    pub to_id: StateID,       // tmp pub
+    pub kind: TransitionKind, // tmp pub
 }
 
-pub struct Transition {
-    to_id: StateID,
-    kind: TransitionKind,
-}
 impl Transition {
     pub fn to_id(&self) -> StateID {
         self.to_id
@@ -48,7 +46,7 @@ impl Transition {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TransitionKind {
     Literal(char),
     Epsilon,
@@ -86,6 +84,12 @@ impl NFA {
         Ok(())
     }
 
+    pub fn add_state(&mut self, state: State) -> StateID {
+        let id = self.states.len() as StateID;
+        self.states.push(state);
+        id
+    }
+
     pub fn start(&self) -> StateID {
         self.start
     }
@@ -110,9 +114,9 @@ impl NFA {
         for (i, state) in self.states.iter().enumerate() {
             match state {
                 State::Accept => println!("State {}: Accept", i),
-                State::Transition(transition_state) => {
+                State::Transition(transitions) => {
                     println!("State {}: Transitions ->", i);
-                    for transition in &transition_state.transitions {
+                    for transition in transitions {
                         match transition.kind {
                             TransitionKind::Literal(c) => {
                                 println!("  to_id {} on '{}'", transition.to_id, c)
@@ -129,41 +133,31 @@ impl NFA {
 }
 
 impl NFA {
-    fn add_state(&mut self, state: State) -> StateID {
-        let id = self.states.len() as StateID;
-        self.states.push(state);
-        id
-    }
-
     fn add_transition(
         &mut self,
-        from: StateID,
+        from_id: StateID,
         to_id: StateID,
         kind: TransitionKind,
     ) -> Result<(), Error> {
-        if from >= self.states.len() as StateID {
+        if from_id >= self.states.len() as StateID {
             return Err(Error::state_id_overflow(self.states.len()));
         }
 
-        if let Some(transitions) = self.states[from].as_transition_mut() {
+        if let Some(transitions) = self.states[from_id].as_transitions_mut() {
             transitions.push(Transition { to_id, kind });
             Ok(())
         } else {
             Err(Error::invalid_state(&format!(
                 "State is not a transition state: id: {}, kind: {}",
-                from,
-                self.states[from].kind()
+                from_id,
+                self.states[from_id].kind()
             )))
         }
     }
 
     fn new_fragment(&mut self) -> NFAFragment {
-        let start = self.add_state(State::Transition(TransitionState {
-            transitions: Vec::new(),
-        }));
-        let end = self.add_state(State::Transition(TransitionState {
-            transitions: Vec::new(),
-        }));
+        let start = self.add_state(State::Transition(Vec::new()));
+        let end = self.add_state(State::Transition(Vec::new()));
         NFAFragment { start, end }
     }
 

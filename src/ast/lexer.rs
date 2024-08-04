@@ -22,10 +22,6 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn next_token(&mut self) -> Token {
-        while self.position < self.input.len() && self.input[self.position..].starts_with(' ') {
-            self.position += 1;
-        }
-
         if self.position >= self.input.len() {
             return Token::EndOfFile;
         }

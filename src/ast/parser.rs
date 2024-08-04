@@ -1,6 +1,7 @@
 use super::lexer::{Lexer, Token};
 use super::{Ast, Repetition};
 use crate::error::Error;
+
 #[derive(Debug, PartialEq)]
 pub struct Parser<'a> {
     lexer: Lexer<'a>,

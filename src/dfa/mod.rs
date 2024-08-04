@@ -89,7 +89,7 @@ impl<S: Eq + Hash + Clone> DFA<S> {
             println!("  transitions:");
             if let Some(transitions) = self.transitions.get(&state.id) {
                 for (input, to) in transitions {
-                    println!("    {} -> {}", input, to);
+                    println!("    input:{} -> {}", input, to);
                 }
             }
         }
