@@ -3,28 +3,38 @@ use crate::error::Error;
 pub type StateID = usize;
 
 pub enum State {
-    Accept,
+    Accept(Vec<Transition>),
     Transition(Vec<Transition>),
 }
 
 impl State {
     pub fn as_transitions_mut(&mut self) -> Option<&mut Vec<Transition>> {
         match self {
-            State::Transition(transitions) => Some(transitions),
-            _ => None,
+            State::Accept(transitions) | State::Transition(transitions) => Some(transitions),
         }
     }
 
     pub fn as_transitions(&self) -> Option<&Vec<Transition>> {
         match self {
-            State::Transition(transitions) => Some(transitions),
-            _ => None,
+            State::Accept(transitions) | State::Transition(transitions) => Some(transitions),
+        }
+    }
+
+    pub fn make_accept(&mut self) {
+        if let State::Transition(transitions) = self {
+            *self = State::Accept(transitions.clone());
+        }
+    }
+
+    pub fn make_transition(&mut self) {
+        if let State::Accept(transitions) = self {
+            *self = State::Transition(transitions.clone());
         }
     }
 
     pub fn kind(&self) -> &str {
         match self {
-            State::Accept => "Accept",
+            State::Accept(_) => "Accept",
             State::Transition(_) => "Transition",
         }
     }
@@ -32,8 +42,8 @@ impl State {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Transition {
-    pub to_id: StateID,       // tmp pub
-    pub kind: TransitionKind, // tmp pub
+    pub to_id: StateID,
+    pub kind: TransitionKind,
 }
 
 impl Transition {
@@ -106,6 +116,10 @@ impl NFA {
         self.states.len()
     }
 
+    pub fn is_accept(&self, id: StateID) -> bool {
+        matches!(self.states.get(id), Some(State::Accept(_)))
+    }
+
     #[allow(dead_code)]
     pub fn print(&self) {
         println!("NFA:");
@@ -113,8 +127,7 @@ impl NFA {
         println!("End state: {}", self.end);
         for (i, state) in self.states.iter().enumerate() {
             match state {
-                State::Accept => println!("State {}: Accept", i),
-                State::Transition(transitions) => {
+                State::Transition(transitions) | State::Accept(transitions) => {
                     println!("State {}: Transitions ->", i);
                     for transition in transitions {
                         match transition.kind {
@@ -170,7 +183,7 @@ impl NFA {
         if id >= self.states.len() as StateID {
             return Err(Error::state_id_overflow(self.states.len()));
         }
-        self.states[id] = State::Accept;
+        self.states[id].make_accept();
 
         Ok(())
     }

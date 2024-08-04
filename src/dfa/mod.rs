@@ -1,6 +1,6 @@
 pub mod determinize;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::hash::Hash;
 
 use crate::error::Error;
@@ -19,7 +19,6 @@ pub struct State<S> {
 pub struct DFA<S: Eq + Hash + Clone> {
     states: Vec<State<S>>,
     start: Option<StateID>,
-    accept_states: HashSet<StateID>,
     transitions: HashMap<StateID, HashMap<char, StateID>>,
 }
 
@@ -28,17 +27,12 @@ impl<S: Eq + Hash + Clone> DFA<S> {
         Self {
             states: Vec::new(),
             start: None,
-            accept_states: HashSet::new(),
             transitions: HashMap::new(),
         }
     }
 
     pub fn set_start(&mut self, state_id: StateID) {
         self.start = Some(state_id);
-    }
-
-    pub fn add_accept_state(&mut self, state_id: StateID) {
-        self.accept_states.insert(state_id);
     }
 
     pub fn add_transition(&mut self, from: StateID, input: char, to: StateID) {
@@ -66,8 +60,12 @@ impl<S: Eq + Hash + Clone> DFA<S> {
     pub fn start(&self) -> Option<StateID> {
         self.start
     }
-    pub fn accepts(&self) -> &HashSet<StateID> {
-        &self.accept_states
+    pub fn accepts(&self) -> Vec<StateID> {
+        self.states
+            .iter()
+            .filter(|state| state.is_match)
+            .map(|state| state.id)
+            .collect()
     }
 
     pub fn next(&self, current: StateID, input: char) -> Option<StateID> {
@@ -93,7 +91,7 @@ impl<S: Eq + Hash + Clone> DFA<S> {
                 }
             }
         }
-        println!("Accept states: {:?}", self.accept_states);
+        println!("Accept states: {:?}", self.accepts());
     }
 }
 
@@ -110,13 +108,12 @@ mod tests {
         let state2 = dfa.new_state(true, &vec![2]).unwrap();
 
         dfa.set_start(state0);
-        dfa.add_accept_state(state2);
 
         dfa.add_transition(state0, 'a', state1);
         dfa.add_transition(state1, 'b', state2);
 
         assert_eq!(dfa.start(), Some(state0));
-        assert_eq!(dfa.accepts(), &vec![state2].into_iter().collect());
+        assert_eq!(dfa.accepts(), vec![state2]);
 
         assert_eq!(dfa.next(state0, 'a'), Some(state1));
         assert_eq!(dfa.next(state1, 'b'), Some(state2));

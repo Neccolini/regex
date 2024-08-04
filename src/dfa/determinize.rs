@@ -24,7 +24,9 @@ impl<'a> Determinizer<'a> {
         let start_state_ids = self.epsilon_closure(&[self.nfa.start()]);
         let start_state_set: BTreeSet<nfa::StateID> = start_state_ids.iter().cloned().collect();
 
-        let start_id = self.dfa.new_state(false, &start_state_ids)?;
+        let is_match = start_state_ids.iter().any(|&id| self.nfa.is_accept(id));
+        let start_id = self.dfa.new_state(is_match, &start_state_ids)?;
+
         self.dfa.set_start(start_id);
         dfa_states.insert(start_state_set, start_id);
         queue.push_back(start_id);
@@ -39,7 +41,9 @@ impl<'a> Determinizer<'a> {
                 let to_state_id = if let Some(&existing_id) = dfa_states.get(&closure_set) {
                     existing_id
                 } else {
-                    let new_id = self.dfa.new_state(false, &closure)?;
+                    let is_match = closure.iter().any(|&id| self.nfa.is_accept(id));
+                    let new_id = self.dfa.new_state(is_match, &closure)?;
+
                     dfa_states.insert(closure_set.clone(), new_id);
                     queue.push_back(new_id);
                     new_id
@@ -47,12 +51,6 @@ impl<'a> Determinizer<'a> {
 
                 self.dfa
                     .add_transition(current_state_id, input, to_state_id);
-            }
-        }
-
-        for (nfa_states, dfa_state_id) in &dfa_states {
-            if nfa_states.contains(&self.nfa.end()) {
-                self.dfa.add_accept_state(*dfa_state_id);
             }
         }
 
