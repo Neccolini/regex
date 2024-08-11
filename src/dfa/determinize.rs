@@ -6,7 +6,7 @@ use crate::nfa::{self, TransitionKind, NFA};
 
 pub struct Determinizer<'a> {
     nfa: &'a NFA,
-    pub dfa: DFA<nfa::StateID>,
+    pub dfa: DFA,
 }
 
 impl<'a> Determinizer<'a> {

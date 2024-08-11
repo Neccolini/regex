@@ -6,7 +6,7 @@ mod nfa;
 use crate::error::Error;
 
 pub struct Regex {
-    dfa: dfa::DFA<usize>,
+    dfa: dfa::DFA,
 }
 
 impl Regex {

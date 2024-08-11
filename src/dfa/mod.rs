@@ -4,25 +4,26 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 use crate::error::Error;
+use crate::nfa;
 
 pub type StateID = usize;
 
 #[derive(Eq, Hash, PartialEq, Debug, Clone)]
-pub struct State<S> {
+pub struct State {
     pub id: StateID,
     pub is_match: bool,
-    pub nfa_states: Vec<S>,
+    pub nfa_states: Vec<nfa::StateID>,
 }
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug)]
-pub struct DFA<S: Eq + Hash + Clone> {
-    states: Vec<State<S>>,
+pub struct DFA {
+    states: Vec<State>,
     start: Option<StateID>,
     transitions: HashMap<StateID, HashMap<char, StateID>>,
 }
 
-impl<S: Eq + Hash + Clone> DFA<S> {
+impl DFA {
     pub fn new() -> Self {
         Self {
             states: Vec::new(),
@@ -39,7 +40,11 @@ impl<S: Eq + Hash + Clone> DFA<S> {
         self.transitions.entry(from).or_default().insert(input, to);
     }
 
-    pub fn new_state(&mut self, is_match: bool, nfa_states: &[S]) -> Result<StateID, Error> {
+    pub fn new_state(
+        &mut self,
+        is_match: bool,
+        nfa_states: &[nfa::StateID],
+    ) -> Result<StateID, Error> {
         let id = self.states.len();
 
         let state = State {
@@ -53,7 +58,7 @@ impl<S: Eq + Hash + Clone> DFA<S> {
         Ok(id)
     }
 
-    pub fn state(&self, id: StateID) -> Option<&State<S>> {
+    pub fn state(&self, id: StateID) -> Option<&State> {
         self.states.get(id)
     }
 
@@ -76,10 +81,7 @@ impl<S: Eq + Hash + Clone> DFA<S> {
     }
 
     #[allow(dead_code)]
-    pub fn print(&self)
-    where
-        S: std::fmt::Debug,
-    {
+    pub fn print(&self) {
         for (i, state) in self.states.iter().enumerate() {
             println!("State {}", i);
             println!("  is_match: {}", state.is_match);
@@ -101,7 +103,7 @@ mod tests {
 
     #[test]
     fn test_dfa() {
-        let mut dfa: DFA<usize> = DFA::new();
+        let mut dfa: DFA = DFA::new();
 
         let state0 = dfa.new_state(false, &vec![0]).unwrap();
         let state1 = dfa.new_state(false, &vec![1]).unwrap();
