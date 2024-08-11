@@ -100,6 +100,15 @@ impl NFA {
         id
     }
 
+    pub fn make_accept(&mut self, id: StateID) -> Result<(), Error> {
+        if id >= self.states.len() as StateID {
+            return Err(Error::state_id_overflow(self.states.len()));
+        }
+        self.states[id].make_accept();
+
+        Ok(())
+    }
+
     pub fn start(&self) -> StateID {
         self.start
     }
@@ -179,14 +188,6 @@ impl NFA {
         self.end = end;
     }
 
-    fn make_accept(&mut self, id: StateID) -> Result<(), Error> {
-        if id >= self.states.len() as StateID {
-            return Err(Error::state_id_overflow(self.states.len()));
-        }
-        self.states[id].make_accept();
-
-        Ok(())
-    }
     fn construct(&mut self, ast: &Ast) -> Result<NFAFragment, Error> {
         match ast {
             Ast::Literal(c) => self.construct_literal(*c),

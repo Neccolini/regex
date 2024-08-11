@@ -102,3 +102,112 @@ impl<'a> Determinizer<'a> {
         closure
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use super::super::State;
+    use super::*;
+    use crate::nfa::TransitionKind;
+    #[test]
+    fn test_build() {
+        let mut nfa = NFA::new();
+        let _start = nfa.add_state(nfa::State::Transition(vec![
+            nfa::Transition {
+                to_id: 1,
+                kind: TransitionKind::Literal('0'),
+            },
+            nfa::Transition {
+                to_id: 2,
+                kind: TransitionKind::Epsilon,
+            },
+        ]));
+        let _one = nfa.add_state(nfa::State::Transition(vec![
+            nfa::Transition {
+                to_id: 1,
+                kind: TransitionKind::Literal('1'),
+            },
+            nfa::Transition {
+                to_id: 3,
+                kind: TransitionKind::Literal('1'),
+            },
+        ]));
+        let _two = nfa.add_state(nfa::State::Transition(vec![
+            nfa::Transition {
+                to_id: 1,
+                kind: TransitionKind::Epsilon,
+            },
+            nfa::Transition {
+                to_id: 3,
+                kind: TransitionKind::Literal('0'),
+            },
+        ]));
+
+        let _three = nfa.add_state(nfa::State::Transition(vec![nfa::Transition {
+            to_id: 2,
+            kind: TransitionKind::Literal('0'),
+        }]));
+
+        nfa.make_accept(2).unwrap();
+        nfa.make_accept(3).unwrap();
+
+        nfa.print();
+
+        let mut determinizer = Determinizer::new(&nfa);
+        determinizer.build().unwrap();
+
+        // 構築されたDFAが期待通りであるかを確認
+        let dfa = &determinizer.dfa;
+
+        // 期待される状態と遷移を定義
+        let expected_states = vec![
+            State {
+                id: 0,
+                is_match: true,
+                nfa_states: vec![0, 2, 1],
+            },
+            State {
+                id: 1,
+                is_match: true,
+                nfa_states: vec![3, 1],
+            },
+            State {
+                id: 2,
+                is_match: true,
+                nfa_states: vec![2, 1],
+            },
+            State {
+                id: 3,
+                is_match: true,
+                nfa_states: vec![3],
+            },
+        ];
+
+        let expected_transitions = vec![
+            (0, '1', 1),
+            (0, '0', 1),
+            (1, '1', 1),
+            (1, '0', 2),
+            (2, '0', 3),
+            (2, '1', 1),
+            (3, '0', 2),
+        ];
+
+        // 状態が一致するかを確認
+        for expected_state in expected_states.clone() {
+            let state = dfa.state(expected_state.id).unwrap();
+            assert_eq!(state.is_match, expected_state.is_match);
+            assert_eq!(state.nfa_states, expected_state.nfa_states);
+        }
+
+        // 遷移が一致するかを確認
+        for (from, input, to) in expected_transitions {
+            assert_eq!(dfa.next(from, input), Some(to));
+        }
+
+        // 受理状態が一致するかを確認
+        let expected_accepts: Vec<StateID> = expected_states.iter().map(|s| s.id).collect();
+        assert_eq!(dfa.accepts(), expected_accepts);
+    }
+}
