@@ -26,12 +26,6 @@ impl State {
         }
     }
 
-    pub fn make_transition(&mut self) {
-        if let State::Accept(transitions) = self {
-            *self = State::Transition(transitions.clone());
-        }
-    }
-
     pub fn kind(&self) -> &str {
         match self {
             State::Accept(_) => "Accept",
@@ -111,10 +105,6 @@ impl NFA {
 
     pub fn start(&self) -> StateID {
         self.start
-    }
-
-    pub fn end(&self) -> StateID {
-        self.end
     }
 
     pub fn state(&self, id: StateID) -> Option<&State> {
