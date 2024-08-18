@@ -18,11 +18,13 @@ impl<'a> Determinizer<'a> {
     }
 
     pub fn build(&mut self) -> Result<(), Error> {
-        let mut dfa_states: HashMap<BTreeSet<nfa::StateID>, StateID> = HashMap::new();
+        let mut dfa_states: HashMap<BTreeSet<nfa::StateID>, StateID> =
+            HashMap::new();
         let mut queue: VecDeque<StateID> = VecDeque::new();
 
         let start_state_ids = self.epsilon_closure(&[self.nfa.start()]);
-        let start_state_set: BTreeSet<nfa::StateID> = start_state_ids.iter().cloned().collect();
+        let start_state_set: BTreeSet<nfa::StateID> =
+            start_state_ids.iter().cloned().collect();
 
         let is_match = start_state_ids.iter().any(|&id| self.nfa.is_accept(id));
         let start_id = self.dfa.new_state(is_match, &start_state_ids)?;
@@ -35,10 +37,15 @@ impl<'a> Determinizer<'a> {
             let transitions = self.get_transitions(current_state_id);
 
             for (input, nfa_state_ids) in transitions {
-                let closure = self.epsilon_closure(&nfa_state_ids.into_iter().collect::<Vec<_>>());
-                let closure_set: BTreeSet<nfa::StateID> = closure.iter().cloned().collect();
+                let closure = self.epsilon_closure(
+                    &nfa_state_ids.into_iter().collect::<Vec<_>>(),
+                );
+                let closure_set: BTreeSet<nfa::StateID> =
+                    closure.iter().cloned().collect();
 
-                let to_state_id = if let Some(&existing_id) = dfa_states.get(&closure_set) {
+                let to_state_id = if let Some(&existing_id) =
+                    dfa_states.get(&closure_set)
+                {
                     existing_id
                 } else {
                     let is_match = closure.iter().any(|&id| self.nfa.is_accept(id));
@@ -57,7 +64,10 @@ impl<'a> Determinizer<'a> {
         Ok(())
     }
 
-    fn get_transitions(&self, state_id: StateID) -> HashMap<char, BTreeSet<nfa::StateID>> {
+    fn get_transitions(
+        &self,
+        state_id: StateID,
+    ) -> HashMap<char, BTreeSet<nfa::StateID>> {
         let mut transitions: HashMap<char, BTreeSet<nfa::StateID>> = HashMap::new();
         let state = self.dfa.state(state_id).unwrap();
 
@@ -89,7 +99,9 @@ impl<'a> Determinizer<'a> {
                 closure.push(state_id);
                 visited[state_id] = true;
 
-                if let Some(transitions) = self.nfa.state(state_id).unwrap().as_transitions() {
+                if let Some(transitions) =
+                    self.nfa.state(state_id).unwrap().as_transitions()
+                {
                     for transition in transitions {
                         if let nfa::TransitionKind::Epsilon = transition.kind() {
                             stack.push(transition.to_id());
@@ -207,7 +219,8 @@ mod tests {
         }
 
         // 受理状態が一致するかを確認
-        let expected_accepts: Vec<StateID> = expected_states.iter().map(|s| s.id).collect();
+        let expected_accepts: Vec<StateID> =
+            expected_states.iter().map(|s| s.id).collect();
         assert_eq!(dfa.accepts(), expected_accepts);
     }
 }

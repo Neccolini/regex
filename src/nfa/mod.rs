@@ -10,13 +10,17 @@ pub enum State {
 impl State {
     pub fn as_transitions_mut(&mut self) -> Option<&mut Vec<Transition>> {
         match self {
-            State::Accept(transitions) | State::Transition(transitions) => Some(transitions),
+            State::Accept(transitions) | State::Transition(transitions) => {
+                Some(transitions)
+            }
         }
     }
 
     pub fn as_transitions(&self) -> Option<&Vec<Transition>> {
         match self {
-            State::Accept(transitions) | State::Transition(transitions) => Some(transitions),
+            State::Accept(transitions) | State::Transition(transitions) => {
+                Some(transitions)
+            }
         }
     }
 
@@ -190,7 +194,11 @@ impl NFA {
     fn construct_literal(&mut self, c: char) -> Result<NFAFragment, Error> {
         let fragment = self.new_fragment();
 
-        self.add_transition(fragment.start, fragment.end, TransitionKind::Literal(c))?;
+        self.add_transition(
+            fragment.start,
+            fragment.end,
+            TransitionKind::Literal(c),
+        )?;
 
         Ok(fragment)
     }
@@ -216,20 +224,34 @@ impl NFA {
         Ok(current_fragment)
     }
 
-    fn construct_alternate(&mut self, alternates: &[Ast]) -> Result<NFAFragment, Error> {
+    fn construct_alternate(
+        &mut self,
+        alternates: &[Ast],
+    ) -> Result<NFAFragment, Error> {
         let fragment = self.new_fragment();
 
         for ast in alternates {
             let alt_fragment = self.construct(ast)?;
 
-            self.add_transition(fragment.start, alt_fragment.start, TransitionKind::Epsilon)?;
-            self.add_transition(alt_fragment.end, fragment.end, TransitionKind::Epsilon)?;
+            self.add_transition(
+                fragment.start,
+                alt_fragment.start,
+                TransitionKind::Epsilon,
+            )?;
+            self.add_transition(
+                alt_fragment.end,
+                fragment.end,
+                TransitionKind::Epsilon,
+            )?;
         }
 
         Ok(fragment)
     }
 
-    fn construct_repetition(&mut self, repetition: &Repetition) -> Result<NFAFragment, Error> {
+    fn construct_repetition(
+        &mut self,
+        repetition: &Repetition,
+    ) -> Result<NFAFragment, Error> {
         match (repetition.min, repetition.max) {
             (0, Some(1)) => self.construct_zero_or_one(&repetition.ast),
             (0, None) => self.construct_at_least(&repetition.ast, 0),
@@ -247,7 +269,11 @@ impl NFA {
             inner_fragment.start,
             TransitionKind::Epsilon,
         )?;
-        self.add_transition(inner_fragment.end, fragment.end, TransitionKind::Epsilon)?;
+        self.add_transition(
+            inner_fragment.end,
+            fragment.end,
+            TransitionKind::Epsilon,
+        )?;
 
         // 空文字を受理するε遷移
         self.add_transition(fragment.start, fragment.end, TransitionKind::Epsilon)?;
@@ -255,7 +281,11 @@ impl NFA {
         Ok(fragment)
     }
 
-    fn construct_at_least(&mut self, ast: &Ast, n: usize) -> Result<NFAFragment, Error> {
+    fn construct_at_least(
+        &mut self,
+        ast: &Ast,
+        n: usize,
+    ) -> Result<NFAFragment, Error> {
         let fragment = self.new_fragment();
 
         // 繰り返し部分
@@ -266,10 +296,18 @@ impl NFA {
             inner_fragment.start,
             TransitionKind::Epsilon,
         )?;
-        self.add_transition(inner_fragment.end, fragment.end, TransitionKind::Epsilon)?;
+        self.add_transition(
+            inner_fragment.end,
+            fragment.end,
+            TransitionKind::Epsilon,
+        )?;
 
         if n == 0 {
-            self.add_transition(fragment.start, fragment.end, TransitionKind::Epsilon)?;
+            self.add_transition(
+                fragment.start,
+                fragment.end,
+                TransitionKind::Epsilon,
+            )?;
             self.add_transition(
                 fragment.start,
                 inner_fragment.start,
@@ -282,7 +320,11 @@ impl NFA {
                 let pre_fragment = self.construct(ast)?;
 
                 if let Some(to_id) = pre_start {
-                    self.add_transition(pre_fragment.end, to_id, TransitionKind::Epsilon)?;
+                    self.add_transition(
+                        pre_fragment.end,
+                        to_id,
+                        TransitionKind::Epsilon,
+                    )?;
                 } else {
                     self.add_transition(
                         pre_fragment.end,
@@ -294,7 +336,11 @@ impl NFA {
             }
 
             if let Some(to_id) = pre_start {
-                self.add_transition(fragment.start, to_id, TransitionKind::Epsilon)?;
+                self.add_transition(
+                    fragment.start,
+                    to_id,
+                    TransitionKind::Epsilon,
+                )?;
             } else {
                 self.add_transition(
                     fragment.start,

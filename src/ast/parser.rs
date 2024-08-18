@@ -186,7 +186,10 @@ mod tests {
             ast,
             Ast::Repetition(Repetition {
                 ast: Box::new(Ast::Repetition(Repetition {
-                    ast: Box::new(Ast::Alternate(vec![Ast::Literal('a'), Ast::Literal('b')])),
+                    ast: Box::new(Ast::Alternate(vec![
+                        Ast::Literal('a'),
+                        Ast::Literal('b')
+                    ])),
                     min: 1,
                     max: None
                 })),
