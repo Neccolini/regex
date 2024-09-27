@@ -1,3 +1,5 @@
+use std::str::Chars;
+
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Character(char),   // a, b, c, ...
@@ -10,34 +12,34 @@ pub enum Token {
     EndOfFile,
 }
 
-#[derive(Debug, PartialEq)]
-pub struct Lexer<'a> {
-    input: &'a str,
-    position: usize,
-}
-
-impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Self {
-        Lexer { input, position: 0 }
-    }
-
-    pub fn next_token(&mut self) -> Token {
-        if self.position >= self.input.len() {
-            return Token::EndOfFile;
-        }
-
-        let current_char = self.input[self.position..].chars().next().unwrap();
-        self.position += current_char.len_utf8();
-
-        match current_char {
+impl From<char> for Token {
+    fn from(value: char) -> Self {
+        match value {
             '|' => Token::AlternateOperator,
             '*' => Token::StarOperator,
             '+' => Token::PlusOperator,
             '?' => Token::QuestionOperator,
             '(' => Token::OpenParenthesis,
             ')' => Token::CloseParenthesis,
-            _ => Token::Character(current_char),
+            _ => Token::Character(value),
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct Lexer<'a> {
+    chars: Chars<'a>,
+}
+
+impl<'a> Lexer<'a> {
+    pub fn new(input: &'a str) -> Self {
+        Lexer {
+            chars: input.chars(),
+        }
+    }
+
+    pub fn next_token(&mut self) -> Token {
+        self.chars.next().map_or(Token::EndOfFile, Token::from)
     }
 }
 

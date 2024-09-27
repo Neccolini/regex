@@ -2,7 +2,7 @@ use super::lexer::{Lexer, Token};
 use super::{Ast, Repetition};
 use crate::error::Error;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     current_token: Token,
