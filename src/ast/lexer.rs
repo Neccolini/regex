@@ -1,6 +1,9 @@
-use std::str::Chars;
+use std::{
+    iter::{Map, Peekable},
+    str::Chars,
+};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Character(char),   // a, b, c, ...
     AlternateOperator, // |
@@ -26,20 +29,35 @@ impl From<char> for Token {
     }
 }
 
+impl From<Option<Token>> for Token {
+    fn from(value: Option<Token>) -> Self {
+        value.unwrap_or(Token::EndOfFile)
+    }
+}
+
+type TokenPeekable<'a> = Peekable<Map<Chars<'a>, fn(char) -> Token>>;
+
 #[derive(Debug)]
 pub struct Lexer<'a> {
-    chars: Chars<'a>,
+    token_iter: TokenPeekable<'a>,
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         Lexer {
-            chars: input.chars(),
+            token_iter: input
+                .chars()
+                .map(Into::into as fn(char) -> Token)
+                .peekable(),
         }
     }
 
+    pub fn peek_token(&mut self) -> Token {
+        self.token_iter.peek().cloned().into()
+    }
+
     pub fn next_token(&mut self) -> Token {
-        self.chars.next().map_or(Token::EndOfFile, Token::from)
+        self.token_iter.next().into()
     }
 }
 
@@ -74,6 +92,24 @@ mod tests {
         assert_eq!(lexer.next_token(), Token::OpenParenthesis);
         assert_eq!(lexer.next_token(), Token::Character('a'));
         assert_eq!(lexer.next_token(), Token::CloseParenthesis);
+        assert_eq!(lexer.next_token(), Token::EndOfFile);
+    }
+
+    #[test]
+    fn test_peek() {
+        let mut lexer = Lexer::new("abcde");
+        assert_eq!(lexer.peek_token(), Token::Character('a'));
+        assert_eq!(lexer.peek_token(), Token::Character('a'));
+        assert_eq!(lexer.next_token(), Token::Character('a'));
+        assert_eq!(lexer.next_token(), Token::Character('b'));
+        assert_eq!(lexer.peek_token(), Token::Character('c'));
+        lexer.next_token();
+        lexer.next_token();
+        assert_eq!(lexer.peek_token(), Token::Character('e'));
+        assert_eq!(lexer.next_token(), Token::Character('e'));
+        assert_eq!(lexer.peek_token(), Token::EndOfFile);
+        assert_eq!(lexer.next_token(), Token::EndOfFile);
+        assert_eq!(lexer.peek_token(), Token::EndOfFile);
         assert_eq!(lexer.next_token(), Token::EndOfFile);
     }
 }
