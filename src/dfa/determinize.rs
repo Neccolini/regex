@@ -27,7 +27,7 @@ impl<'a> Determinizer<'a> {
             start_state_ids.iter().cloned().collect();
 
         let is_match = start_state_ids.iter().any(|&id| self.nfa.is_accept(id));
-        let start_id = self.dfa.new_state(is_match, &start_state_ids)?;
+        let start_id = self.dfa.new_state(is_match, &start_state_ids);
 
         self.dfa.set_start(start_id);
         dfa_states.insert(start_state_set, start_id);
@@ -49,7 +49,7 @@ impl<'a> Determinizer<'a> {
                     existing_id
                 } else {
                     let is_match = closure.iter().any(|&id| self.nfa.is_accept(id));
-                    let new_id = self.dfa.new_state(is_match, &closure)?;
+                    let new_id = self.dfa.new_state(is_match, &closure);
 
                     dfa_states.insert(closure_set.clone(), new_id);
                     queue.push_back(new_id);
