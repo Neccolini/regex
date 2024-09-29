@@ -281,7 +281,7 @@ impl NFA {
         let fragment = self.new_fragment();
 
         // 繰り返し部分
-        let inner_fragment = self.construct(ast)?;
+        let mut inner_fragment = self.construct(ast)?;
 
         self.add_transition(
             inner_fragment.end,
@@ -295,52 +295,33 @@ impl NFA {
         )?;
 
         if n == 0 {
+            // 空文字受理
             self.add_transition(
                 fragment.start,
                 fragment.end,
                 TransitionKind::Epsilon,
             )?;
-            self.add_transition(
-                fragment.start,
-                inner_fragment.start,
-                TransitionKind::Epsilon,
-            )?;
         } else {
-            let mut pre_start = None;
-
             for _ in 0..n - 1 {
                 let pre_fragment = self.construct(ast)?;
 
-                if let Some(to_id) = pre_start {
-                    self.add_transition(
-                        pre_fragment.end,
-                        to_id,
-                        TransitionKind::Epsilon,
-                    )?;
-                } else {
-                    self.add_transition(
-                        pre_fragment.end,
-                        inner_fragment.start,
-                        TransitionKind::Epsilon,
-                    )?;
-                }
-                pre_start.get_or_insert(pre_fragment.start);
-            }
-
-            if let Some(to_id) = pre_start {
                 self.add_transition(
-                    fragment.start,
-                    to_id,
-                    TransitionKind::Epsilon,
-                )?;
-            } else {
-                self.add_transition(
-                    fragment.start,
+                    pre_fragment.end,
                     inner_fragment.start,
                     TransitionKind::Epsilon,
                 )?;
+
+                // inner_fragment を更新
+                inner_fragment = pre_fragment;
             }
         }
+
+        // 開始状態から inner_fragment に ε 遷移
+        self.add_transition(
+            fragment.start,
+            inner_fragment.start,
+            TransitionKind::Epsilon,
+        )?;
 
         Ok(fragment)
     }
