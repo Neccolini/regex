@@ -51,7 +51,7 @@ impl<'a> Determinizer<'a> {
                     let is_match = closure.iter().any(|&id| self.nfa.is_accept(id));
                     let new_id = self.dfa.new_state(is_match, &closure);
 
-                    dfa_states.insert(closure_set.clone(), new_id);
+                    dfa_states.insert(closure_set, new_id);
                     queue.push_back(new_id);
                     new_id
                 };
