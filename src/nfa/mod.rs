@@ -8,18 +8,18 @@ pub enum State {
 }
 
 impl State {
-    pub fn as_transitions_mut(&mut self) -> Option<&mut Vec<Transition>> {
+    pub fn as_transitions_mut(&mut self) -> &mut Vec<Transition> {
         match self {
             State::Accept(transitions) | State::Transition(transitions) => {
-                Some(transitions)
+                transitions
             }
         }
     }
 
-    pub fn as_transitions(&self) -> Option<&Vec<Transition>> {
+    pub fn as_transitions(&self) -> &Vec<Transition> {
         match self {
             State::Accept(transitions) | State::Transition(transitions) => {
-                Some(transitions)
+                transitions
             }
         }
     }
@@ -99,12 +99,10 @@ impl NFA {
     }
 
     pub fn make_accept(&mut self, id: StateID) -> Result<(), Error> {
-        if id >= self.states.len() as StateID {
-            return Err(Error::state_id_overflow(self.states.len()));
-        }
-        self.states[id].make_accept();
-
-        Ok(())
+        self.states
+            .get_mut(id)
+            .map(State::make_accept)
+            .ok_or(Error::state_id_overflow(self.states_count()))
     }
 
     pub fn start(&self) -> StateID {
@@ -155,20 +153,12 @@ impl NFA {
         to_id: StateID,
         kind: TransitionKind,
     ) -> Result<(), Error> {
-        if from_id >= self.states.len() as StateID {
-            return Err(Error::state_id_overflow(self.states.len()));
-        }
-
-        if let Some(transitions) = self.states[from_id].as_transitions_mut() {
-            transitions.push(Transition { to_id, kind });
-            Ok(())
-        } else {
-            Err(Error::invalid_state(&format!(
-                "State is not a transition state: id: {}, kind: {}",
-                from_id,
-                self.states[from_id].kind()
-            )))
-        }
+        self.states
+            .get_mut(from_id)
+            .map(|state| {
+                state.as_transitions_mut().push(Transition { to_id, kind })
+            })
+            .ok_or(Error::state_id_overflow(self.states_count()))
     }
 
     fn new_fragment(&mut self) -> NFAFragment {
@@ -204,13 +194,15 @@ impl NFA {
     }
 
     fn construct_concat(&mut self, concats: &[Ast]) -> Result<NFAFragment, Error> {
-        if concats.is_empty() {
-            return Err(Error::syntax("Empty concatenation"));
-        }
+        let mut concats_iter = concats.iter();
 
-        let mut current_fragment = self.construct(&concats[0])?;
+        let mut current_fragment = self.construct(
+            concats_iter
+                .next()
+                .ok_or(Error::syntax("Empty concatenation"))?,
+        )?;
 
-        for ast in &concats[1..] {
+        for ast in concats_iter {
             let next_fragment = self.construct(ast)?;
 
             self.add_transition(
@@ -289,7 +281,7 @@ impl NFA {
         let fragment = self.new_fragment();
 
         // 繰り返し部分
-        let inner_fragment = self.construct(ast)?;
+        let mut inner_fragment = self.construct(ast)?;
 
         self.add_transition(
             inner_fragment.end,
@@ -303,52 +295,33 @@ impl NFA {
         )?;
 
         if n == 0 {
+            // 空文字受理
             self.add_transition(
                 fragment.start,
                 fragment.end,
                 TransitionKind::Epsilon,
             )?;
-            self.add_transition(
-                fragment.start,
-                inner_fragment.start,
-                TransitionKind::Epsilon,
-            )?;
         } else {
-            let mut pre_start = None;
-
             for _ in 0..n - 1 {
                 let pre_fragment = self.construct(ast)?;
 
-                if let Some(to_id) = pre_start {
-                    self.add_transition(
-                        pre_fragment.end,
-                        to_id,
-                        TransitionKind::Epsilon,
-                    )?;
-                } else {
-                    self.add_transition(
-                        pre_fragment.end,
-                        inner_fragment.start,
-                        TransitionKind::Epsilon,
-                    )?;
-                }
-                pre_start.get_or_insert(pre_fragment.start);
-            }
-
-            if let Some(to_id) = pre_start {
                 self.add_transition(
-                    fragment.start,
-                    to_id,
-                    TransitionKind::Epsilon,
-                )?;
-            } else {
-                self.add_transition(
-                    fragment.start,
+                    pre_fragment.end,
                     inner_fragment.start,
                     TransitionKind::Epsilon,
                 )?;
+
+                // inner_fragment を更新
+                inner_fragment = pre_fragment;
             }
         }
+
+        // 開始状態から inner_fragment に ε 遷移
+        self.add_transition(
+            fragment.start,
+            inner_fragment.start,
+            TransitionKind::Epsilon,
+        )?;
 
         Ok(fragment)
     }
