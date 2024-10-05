@@ -29,13 +29,6 @@ impl State {
             *self = State::Accept(transitions.clone());
         }
     }
-
-    pub fn kind(&self) -> &str {
-        match self {
-            State::Accept(_) => "Accept",
-            State::Transition(_) => "Transition",
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
