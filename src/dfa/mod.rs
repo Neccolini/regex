@@ -39,11 +39,7 @@ impl DFA {
         self.transitions.entry(from).or_default().insert(input, to);
     }
 
-    pub fn new_state(
-        &mut self,
-        is_match: bool,
-        nfa_states: &[nfa::StateID],
-    ) -> StateID {
+    pub fn new_state(&mut self, is_match: bool, nfa_states: &[nfa::StateID]) -> StateID {
         let id = self.states.len();
 
         let state = State {
