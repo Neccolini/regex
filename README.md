@@ -1,4 +1,4 @@
-# Rustで正規表現エンジンを実装する
+# Rustで正規表現エンジンを自作する
 
 本リポジトリでは[Lettuce Yogurt、『令和の新卒エンジニア』、技術書店17](https://techbookfest.org/product/42JrffL4fu51vRf718xaej)の第7章『Rustで正規表現エンジンを自作する』のソースコードを配布しています。
 
