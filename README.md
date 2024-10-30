@@ -1,31 +1,21 @@
-## 正規表現エンジンを実装する
+# Rustで正規表現エンジンを実装する
 
+本リポジトリでは[Lettuce Yogurt、『令和の新卒エンジニア』、技術書店17](https://techbookfest.org/product/42JrffL4fu51vRf718xaej)の第7章『Rustで正規表現エンジンを自作する』のソースコードを配布しています。
 
-### メモ
-今回実装すること
+# ブランチ
+- [lettuce-yogurt](https://github.com/Neccolini/regex/tree/lettuce-yogurt): 上記書籍の内容に沿った実装
+- [main](https://github.com/Neccolini/regex/tree/main): 上記書籍の内容に沿った実装に加え、拡張機能を追加(予定)した実装
 
-- 正規表現を構文解析してASTを生成
-- ASTからNFAを構築
-  - Thompsonの構築法
-- NFAをDFAに変換
-  - Subset Construction法
-- DFAを最適化
-  - on-the-fly構成法
-  - Hopcroftの最適化法
+## 実行
+### テストの実行
+```
+$ cargo test
+```
 
-今回文章に書くこと
-- 正規表現とは 1ページ
-- 正規表現の実装について 1ページ
-- 数学的な説明 7ページ
-- Thompsonの構築法 5ページ
-- Subset Construction法 5ページ
-- on-the-fly構成法 2ページ
-- Hopcroftの最適化法 2ページ
-- ReDoSについて 2ページ
+## 正誤表
+上記書籍の[ポータルページ](https://github.com/techbookfest-LettuceYogurt/techbookfest17-portal)をご覧ください
 
-
-参考にしたファイル
-/home/naga/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.6.29/src/ast/parse.rs
-/home/naga/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.6.29/src/ast/mod.rs
-/home/naga/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.1.10/src/nfa/compiler.rs
-/home/naga/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.1.10/src/nfa/mod.rs
+## ライセンス
+ソースコードのライセンスは[MITライセンス](LICENSE)ですので、改変、再配布、商用利用など自由に無料で行えます。
+再配布や商用利用する際は、著作権表示とMITライセンスの全文を記載して下さい。
+ただし、本ソースコードを利用した際に何らかの問題が起きたとしても、著者は一切の責任を負いません。
