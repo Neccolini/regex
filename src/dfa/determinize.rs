@@ -25,7 +25,7 @@ impl<'a> Determinizer<'a> {
         let start_state_set: BTreeSet<nfa::StateID> = start_state_ids.iter().cloned().collect();
 
         let is_match = start_state_ids.iter().any(|&id| self.nfa.is_accept(id));
-        let start_id = self.dfa.new_state(is_match, &start_state_ids)?;
+        let start_id = self.dfa.new_state(is_match, &start_state_ids);
 
         self.dfa.set_start(start_id);
         dfa_states.insert(start_state_set, start_id);
@@ -42,9 +42,9 @@ impl<'a> Determinizer<'a> {
                     existing_id
                 } else {
                     let is_match = closure.iter().any(|&id| self.nfa.is_accept(id));
-                    let new_id = self.dfa.new_state(is_match, &closure)?;
+                    let new_id = self.dfa.new_state(is_match, &closure);
 
-                    dfa_states.insert(closure_set.clone(), new_id);
+                    dfa_states.insert(closure_set, new_id);
                     queue.push_back(new_id);
                     new_id
                 };
@@ -62,16 +62,13 @@ impl<'a> Determinizer<'a> {
         let state = self.dfa.state(state_id).unwrap();
 
         for &nfa_state_id in &state.nfa_states {
-            if let Some(transitions_from_state) =
-                self.nfa.state(nfa_state_id).unwrap().as_transitions()
-            {
-                for transition in transitions_from_state {
-                    if let TransitionKind::Literal(c) = transition.kind() {
-                        transitions
-                            .entry(*c)
-                            .or_default()
-                            .insert(transition.to_id());
-                    }
+            let transitions_from_state = self.nfa.state(nfa_state_id).unwrap().as_transitions();
+            for transition in transitions_from_state {
+                if let TransitionKind::Literal(c) = transition.kind() {
+                    transitions
+                        .entry(*c)
+                        .or_default()
+                        .insert(transition.to_id());
                 }
             }
         }
@@ -89,11 +86,10 @@ impl<'a> Determinizer<'a> {
                 closure.push(state_id);
                 visited[state_id] = true;
 
-                if let Some(transitions) = self.nfa.state(state_id).unwrap().as_transitions() {
-                    for transition in transitions {
-                        if let nfa::TransitionKind::Epsilon = transition.kind() {
-                            stack.push(transition.to_id());
-                        }
+                let transitions = self.nfa.state(state_id).unwrap().as_transitions();
+                for transition in transitions {
+                    if let nfa::TransitionKind::Epsilon = transition.kind() {
+                        stack.push(transition.to_id());
                     }
                 }
             }

@@ -2,19 +2,15 @@ use super::lexer::{Lexer, Token};
 use super::{Ast, Repetition};
 use crate::error::Error;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
-    current_token: Token,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(pattern: &'a str) -> Self {
-        let mut lexer = Lexer::new(pattern);
-        let current_token = lexer.next_token();
         Self {
-            lexer,
-            current_token,
+            lexer: Lexer::new(pattern),
         }
     }
 
@@ -23,11 +19,15 @@ impl<'a> Parser<'a> {
     }
 
     fn next(&mut self) {
-        self.current_token = self.lexer.next_token();
+        self.lexer.next_token();
+    }
+
+    fn current_token(&mut self) -> Token {
+        self.lexer.peek_token()
     }
 
     fn parse_literal(&mut self) -> Result<Ast, Error> {
-        match self.current_token {
+        match self.current_token() {
             Token::Character(c) => {
                 self.next();
                 Ok(Ast::Literal(c))
@@ -35,7 +35,7 @@ impl<'a> Parser<'a> {
             Token::OpenParenthesis => {
                 self.next();
                 let ast = self.parse_alternate()?;
-                if let Token::CloseParenthesis = self.current_token {
+                if let Token::CloseParenthesis = self.current_token() {
                     self.next();
                     Ok(ast)
                 } else {
@@ -50,7 +50,7 @@ impl<'a> Parser<'a> {
         let mut nodes = vec![self.parse_repetition()?];
 
         while matches!(
-            self.current_token,
+            self.current_token(),
             Token::Character(_) | Token::OpenParenthesis
         ) {
             nodes.push(self.parse_repetition()?);
@@ -66,7 +66,7 @@ impl<'a> Parser<'a> {
     fn parse_alternate(&mut self) -> Result<Ast, Error> {
         let mut nodes = vec![self.parse_concat()?];
 
-        while matches!(self.current_token, Token::AlternateOperator) {
+        while matches!(self.current_token(), Token::AlternateOperator) {
             self.next();
             nodes.push(self.parse_concat()?);
         }
@@ -81,7 +81,7 @@ impl<'a> Parser<'a> {
     fn parse_repetition(&mut self) -> Result<Ast, Error> {
         let ast = self.parse_literal()?;
 
-        match self.current_token {
+        match self.current_token() {
             Token::StarOperator => {
                 self.next();
                 Ok(Ast::Repetition(Repetition {

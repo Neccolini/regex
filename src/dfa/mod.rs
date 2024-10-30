@@ -3,7 +3,6 @@ pub mod determinize;
 use std::collections::HashMap;
 use std::hash::Hash;
 
-use crate::error::Error;
 use crate::nfa;
 
 pub type StateID = usize;
@@ -40,11 +39,7 @@ impl DFA {
         self.transitions.entry(from).or_default().insert(input, to);
     }
 
-    pub fn new_state(
-        &mut self,
-        is_match: bool,
-        nfa_states: &[nfa::StateID],
-    ) -> Result<StateID, Error> {
+    pub fn new_state(&mut self, is_match: bool, nfa_states: &[nfa::StateID]) -> StateID {
         let id = self.states.len();
 
         let state = State {
@@ -55,7 +50,7 @@ impl DFA {
 
         self.states.push(state);
 
-        Ok(id)
+        id
     }
 
     pub fn state(&self, id: StateID) -> Option<&State> {
@@ -105,9 +100,9 @@ mod tests {
     fn test_dfa() {
         let mut dfa: DFA = DFA::new();
 
-        let state0 = dfa.new_state(false, &vec![0]).unwrap();
-        let state1 = dfa.new_state(false, &vec![1]).unwrap();
-        let state2 = dfa.new_state(true, &vec![2]).unwrap();
+        let state0 = dfa.new_state(false, &[0]);
+        let state1 = dfa.new_state(false, &[1]);
+        let state2 = dfa.new_state(true, &[2]);
 
         dfa.set_start(state0);
 

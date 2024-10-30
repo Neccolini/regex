@@ -33,9 +33,4 @@ impl Error {
             kind: ErrorKind::StateIDOverflow { max },
         }
     }
-    pub(crate) fn invalid_state(message: &str) -> Self {
-        Self {
-            kind: ErrorKind::InvalidState(message.to_string()),
-        }
-    }
 }
