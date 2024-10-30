@@ -2,7 +2,7 @@
 
 本リポジトリでは[Lettuce Yogurt、『令和の新卒エンジニア』、技術書店17](https://techbookfest.org/product/42JrffL4fu51vRf718xaej)の第7章『Rustで正規表現エンジンを自作する』のソースコードを配布しています。
 
-# ブランチ
+## ブランチ
 - [lettuce-yogurt](https://github.com/Neccolini/regex/tree/lettuce-yogurt): 上記書籍の内容に沿った実装
 - [main](https://github.com/Neccolini/regex/tree/main): 上記書籍の内容に沿った実装に加え、拡張機能を追加(予定)した実装
 
