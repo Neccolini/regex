@@ -13,7 +13,7 @@ $ cargo test
 ```
 
 ## 正誤表
-上記書籍の[ポータルページ](https://github.com/techbookfest-LettuceYogurt/techbookfest17-portal)をご覧ください
+上記書籍の[ポータルページ](https://techbookfest-lettuceyogurt.github.io/techbookfest17-portal/)をご覧ください
 
 ## ライセンス
 ソースコードのライセンスは[MITライセンス](LICENSE)ですので、改変、再配布、商用利用など自由に無料で行えます。
